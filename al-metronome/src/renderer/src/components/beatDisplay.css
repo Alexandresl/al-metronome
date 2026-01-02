@@ -1,0 +1,77 @@
+/* src/renderer/src/components/BeatDisplay.css */
+
+.beat-display-container {
+  display: flex;
+  gap: 12px; /* Espaço entre os quadrados */
+  justify-content: center;
+  padding: 20px;
+  background: var(--bg-panel);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+}
+
+.beat-box {
+  width: 60px;
+  height: 80px;
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  position: relative;
+
+  /* Centralizar conteúdo se quisermos colocar ícones depois */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.beat-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Estados de Configuração (O "Tipo" da batida) --- */
+
+/* 1. ACENTUADO (ACCENT) */
+.beat-box.type-accent {
+  background-color: rgba(34, 197, 94, 0.1); /* Verde bem suave */
+  border-color: var(--beat-accent);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.2);
+}
+
+/* 2. NORMAL */
+.beat-box.type-normal {
+  background-color: rgba(245, 158, 11, 0.1); /* Laranja suave */
+  border-color: var(--beat-normal);
+}
+
+/* 3. MUDO (MUTE) */
+.beat-box.type-mute {
+  background-color: transparent;
+  border-color: var(--beat-mute);
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+/* --- Estado Ativo (Quando o metrônomo "toca" este quadrado) --- */
+.beat-box.active {
+  transform: scale(1.1);
+  filter: brightness(1.3);
+}
+
+.beat-box.type-accent.active {
+  background-color: var(--beat-accent); /* Verde Sólido */
+  box-shadow: 0 0 20px var(--beat-accent);
+}
+
+.beat-box.type-normal.active {
+  background-color: var(--beat-normal); /* Laranja Sólido */
+  box-shadow: 0 0 15px var(--beat-normal);
+}
+
+.beat-box.type-mute.active {
+  background-color: var(--beat-mute);
+  opacity: 0.8;
+}
