@@ -30,11 +30,14 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', system-ui, sans-serif; /* Fonte nativa do Windows */
+  font-family: 'Segoe UI', system-ui, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  user-select: none; /* Evita que o usuário selecione textos como em um site */
-  overflow: hidden; /* App desktop não costuma ter barra de rolagem na janela principal */
+  user-select: none;
+  overflow: hidden;
+  transition:
+    background-color 0.3s,
+    color 0.3s; /* Suaviza a troca de tema */
 }
 
 /* Layout Principal */
@@ -51,4 +54,11 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+/* Adicione isso para garantir que os inputs do formulário fiquem legíveis no escuro */
+input {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
 }

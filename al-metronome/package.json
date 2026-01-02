@@ -1,10 +1,11 @@
 {
   "name": "al-metronome",
+  "productName": "AL Metronome",
   "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "Metrônomo de precisão para músicos",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "Alexandre Lima",
+  "homepage": "https://www.alexandrelima.dev/",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -19,6 +20,14 @@
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux"
+  },
+  "build": {
+    "appId": "com.alexandre.almetronome",
+    "productName": "AL Metronome",
+    "win": {
+      "target": "nsis",
+      "icon": "resources/icon.ico"
+    }
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",

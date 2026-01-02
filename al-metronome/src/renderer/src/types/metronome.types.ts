@@ -24,3 +24,10 @@ export interface SpeedTrainerConfig {
   barsInterval: number // A cada quantos compassos aumenta?
   isEnabled: boolean
 }
+
+export type SoundType = 'DIGITAL' | 'MECHANICAL' | 'BEEP'
+
+export interface MetronomeSettings {
+  volume: number // 0 a 100
+  soundType: SoundType
+}
