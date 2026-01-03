@@ -56,10 +56,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Desenvolvido */}
         <div className="control-group">
-          <label>Desenvolvido:</label>
+          <label>Desenvolvimento:</label>
           <a href="mailto:contato@alexandrelima.dev">Alexandre Silva Lima</a>
           <label>Versão:</label>
-          <p>1.0v</p>
+          <p>v{__APP_VERSION__}</p>
         </div>
       </div>
     </div>

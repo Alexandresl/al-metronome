@@ -12,15 +12,20 @@ type AppMode = 'FREE' | 'TRAINER'
 
 function App() {
   // --- ESTADOS GLOBAIS ---
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false) // Estado do Modal
+
+  // 1. PERSISTÊNCIA DO TEMA
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('app_theme') === 'dark'
+  })
+
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [mode, setMode] = useState<AppMode>('FREE')
   const [isPlaying, setIsPlaying] = useState(false)
   const [bpm, setBpm] = useState(120)
   const [currentBeat, setCurrentBeat] = useState<number>(-1)
 
-  // --- ESTADOS DE CONFIGURAÇÃO DE ÁUDIO ---
-  const [volume, setVolume] = useState(80) // Volume inicial 80%
+  // --- CONFIGURAÇÃO DE ÁUDIO ---
+  const [volume, setVolume] = useState(80)
   const [soundType, setSoundType] = useState<SoundType>('DIGITAL')
 
   const [steps, setSteps] = useState<BeatStep[]>([
@@ -38,10 +43,15 @@ function App() {
 
   // --- EFEITOS ---
 
-  // Tema
+  // 2. APLICAÇÃO E SALVAMENTO DO TEMA
   useEffect(() => {
-    if (isDarkMode) document.body.classList.add('dark-theme')
-    else document.body.classList.remove('dark-theme')
+    if (isDarkMode) {
+      document.body.classList.add('dark-theme')
+      localStorage.setItem('app_theme', 'dark')
+    } else {
+      document.body.classList.remove('dark-theme')
+      localStorage.setItem('app_theme', 'light')
+    }
   }, [isDarkMode])
 
   // Inicialização Engine
@@ -49,7 +59,6 @@ function App() {
     engineRef.current = new MetronomeEngine((beatIndex) => {
       setCurrentBeat(beatIndex)
     })
-    // Aplica configurações iniciais
     engineRef.current.setVolume(volume)
 
     return () => {
@@ -57,7 +66,7 @@ function App() {
     }
   }, [])
 
-  // Sincronização Áudio (Volume e Tipo) - NOVO
+  // Sincronização Áudio
   useEffect(() => {
     if (engineRef.current) {
       engineRef.current.setVolume(volume)
@@ -65,7 +74,7 @@ function App() {
     }
   }, [volume, soundType])
 
-  // Sincronização Lógica (BPM e Steps)
+  // Sincronização Lógica
   useEffect(() => {
     if (engineRef.current) {
       engineRef.current.setSteps(steps)
@@ -73,7 +82,7 @@ function App() {
     }
   }, [steps, bpm])
 
-  // Lógica Trainer (Mantida igual)
+  // Lógica Trainer
   useEffect(() => {
     if (isPlaying && mode === 'TRAINER' && trainerConfig) {
       if (currentBeat === 0) {
@@ -145,7 +154,6 @@ function App() {
 
   return (
     <div className="app-container" style={{ overflowY: 'auto' }}>
-      {/* MODAL DE CONFIGURAÇÕES */}
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -164,17 +172,17 @@ function App() {
           flexShrink: 0
         }}
       >
-        {/* Título com Ícone */}
+        {/* Título com Ícone e ID Visual - CORRIGIDO AQUI */}
         <div
           style={{
             fontWeight: 'bold',
             fontSize: '1.2rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px' // Espaço entre ícone e texto
+            gap: '10px'
           }}
         >
-          <AppIcon size={28} /> {/* Nosso novo ícone SVG */}
+          <AppIcon size={28} /> {/* O Ícone voltou! */}
           <span>AL Metronome</span>
         </div>
 
@@ -192,7 +200,6 @@ function App() {
             )}
           </button>
 
-          {/* Botão de Configurações AGORA ATIVO */}
           <button
             className="icon-btn"
             onClick={() => setSettingsOpen(true)}
@@ -204,7 +211,6 @@ function App() {
         </div>
       </header>
 
-      {/* Navegação de Abas */}
       <div
         style={{
           display: 'flex',
