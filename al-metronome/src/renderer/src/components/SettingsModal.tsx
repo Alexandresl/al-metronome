@@ -9,6 +9,8 @@ interface SettingsModalProps {
   onVolumeChange: (vol: number) => void
   soundType: SoundType
   onSoundChange: (type: SoundType) => void
+  countInEnabled: boolean
+  onCountInChange: (enabled: boolean) => void
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -17,7 +19,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   volume,
   onVolumeChange,
   soundType,
-  onSoundChange
+  onSoundChange,
+  countInEnabled,
+  onCountInChange
 }) => {
   if (!isOpen) return null
 
@@ -54,9 +58,59 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </select>
         </div>
 
+        {/* NOVO: Configuração do Compasso Inicial */}
+        <div
+          className="control-group"
+          style={{
+            marginTop: '10px',
+            paddingTop: '10px',
+            borderTop: '1px solid var(--border-color)'
+          }}
+        >
+          <label style={{ marginBottom: '10px', display: 'block' }}>
+            Compasso Inicial (Contagem)
+          </label>
+
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                cursor: 'pointer',
+                fontSize: '1rem'
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={countInEnabled}
+                onChange={(e) => onCountInChange(e.target.checked)}
+                style={{ width: '18px', height: '18px', accentColor: 'var(--accent-color)' }}
+              />
+              Ativar Compasso de Contagem
+            </label>
+          </div>
+          <small
+            style={{
+              color: 'var(--text-secondary)',
+              fontSize: '0.8rem',
+              marginTop: '5px',
+              display: 'block'
+            }}
+          >
+            Toca 1 compasso de preparação antes de iniciar o treino.
+          </small>
+        </div>
+
         {/* Desenvolvido */}
-        <div className="control-group">
-          <label>Desenvolvimento:</label>
+        <div className="control-group" style={{ borderTop: '1px solid var(--border-color)' }}>
+          <label
+            style={{
+              marginTop: '10px'
+            }}
+          >
+            Desenvolvimento:
+          </label>
           <a href="mailto:contato@alexandrelima.dev">Alexandre Silva Lima</a>
           <label>Versão:</label>
           <p>v{__APP_VERSION__}</p>
