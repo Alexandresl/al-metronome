@@ -1,6 +1,6 @@
 // Define os tipos de batida possíveis (Req. 3)
 export type BeatType = 'ACCENT' | 'NORMAL' | 'MUTE'
-export type SoundType = 'DIGITAL' | 'MECHANICAL' | 'BEEP'
+export type SoundType = 'DIGITAL' | 'MECHANICAL' | 'BEEP' | 'WAV'
 
 // Define a estrutura de um único tempo no compasso
 export interface BeatStep {
@@ -34,4 +34,9 @@ export interface MetronomeSettings {
 export interface TimeTrainerConfig {
   bpm: number
   minutes: number
+}
+
+export interface TimeSignature {
+  numerator: number // Quantidade de tempos (ex: o '3' do 3/4)
+  denominator: number // Unidade de tempo (ex: o '4' do 3/4)
 }

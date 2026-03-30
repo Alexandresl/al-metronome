@@ -1,0 +1,151 @@
+import i18n from 'i18next'
+import { initReactI18next } from 'react-i18next'
+
+// Tenta recuperar o idioma salvo no cache do navegador
+const savedLanguage = localStorage.getItem('app_language') || 'pt'
+
+const resources = {
+  en: {
+    translation: {
+      themeLight: 'Switch to Light Mode',
+      themeDark: 'Switch to Dark Mode',
+      settings: 'Settings',
+      freeMode: 'Free',
+      timeTrainer: 'Time Trainer',
+      speedTrainer: 'Speed Trainer',
+      trainingFinished: 'Time Training Finished!',
+      getReady: 'GET READY...',
+      paused: 'PAUSED',
+      goal: 'GOAL:',
+      maximum: 'MAXIMUM',
+      next: 'NEXT:',
+      editable: 'EDITABLE',
+      currentBpm: 'CURRENT BPM',
+      countInPhase: 'Count-in Phase',
+      measureProgress: 'Measure {{current}} of {{total}}',
+      timeProgress: 'Time Progress',
+      abort: 'Abort Training and Return',
+      playPause: 'Spacebar to Play/Pause',
+      trainingBpm: 'TRAINING BPM',
+      durationMinutes: 'DURATION (MINUTES)',
+      startTimeTraining: 'Start Time Training',
+      startBpm: 'STARTING BPM',
+      targetBpm: 'TARGET BPM',
+      incrementBpm: 'INCREMENT (BPM)',
+      everyBars: 'EVERY (BARS)',
+      startTraining: 'Start Training',
+      trainingInProgress: 'Training in Progress...',
+      settingsTitle: 'Settings',
+      generalVolume: 'Master Volume',
+      metronomeSound: 'Metronome Sound',
+      soundWav: 'WAV Samples (High Quality)',
+      soundDigital: 'Digital',
+      soundMechanical: 'Mechanical (Woodblock)',
+      soundBeep: 'Digital Beep',
+      countInMeasure: 'Count-in Measure',
+      enableCountIn: 'Enable Count-in',
+      countInDescription: 'Plays 1 preparatory measure before starting the training.',
+      development: 'Developed by:',
+      version: 'Version:'
+    }
+  },
+  pt: {
+    translation: {
+      themeLight: 'Mudar para Claro',
+      themeDark: 'Mudar para Escuro',
+      settings: 'Configurações',
+      freeMode: 'Livre',
+      timeTrainer: 'Por Tempo',
+      speedTrainer: 'Treino de Velocidade',
+      trainingFinished: 'Treino por Tempo Finalizado!',
+      getReady: 'PREPARAR...',
+      paused: 'PAUSADO',
+      goal: 'META:',
+      maximum: 'MÁXIMO',
+      next: 'PRÓXIMO:',
+      editable: 'EDITÁVEL',
+      currentBpm: 'BPM ATUAL',
+      countInPhase: 'Contagem Inicial',
+      measureProgress: 'Compasso {{current}} de {{total}}',
+      timeProgress: 'Progresso do Tempo',
+      abort: 'Abortar Treino e Voltar',
+      playPause: 'Espaço para Play/Pause',
+      trainingBpm: 'BPM DO TREINO',
+      durationMinutes: 'DURAÇÃO (MINUTOS)',
+      startTimeTraining: 'Iniciar Treino por Tempo',
+      startBpm: 'BPM INICIAL',
+      targetBpm: 'BPM ALVO',
+      incrementBpm: 'INCREMENTO (BPM)',
+      everyBars: 'A CADA (COMPASSOS)',
+      startTraining: 'Iniciar Treino',
+      trainingInProgress: 'Treino em Andamento...',
+      settingsTitle: 'Configurações',
+      generalVolume: 'Volume Geral',
+      metronomeSound: 'Timbre do Metrônomo',
+      soundWav: 'Amostras WAV (Alta Qualidade)',
+      soundDigital: 'Digital',
+      soundMechanical: 'Mecânico (Woodblock)',
+      soundBeep: 'Beep Digital',
+      countInMeasure: 'Compasso Inicial (Contagem)',
+      enableCountIn: 'Ativar Compasso de Contagem',
+      countInDescription: 'Toca 1 compasso de preparação antes de iniciar o treino.',
+      development: 'Desenvolvimento:',
+      version: 'Versão:'
+    }
+  },
+  es: {
+    translation: {
+      themeLight: 'Cambiar a Modo Claro',
+      themeDark: 'Cambiar a Modo Oscuro',
+      settings: 'Ajustes',
+      freeMode: 'Libre',
+      timeTrainer: 'Por Tiempo',
+      speedTrainer: 'Entrenador de Velocidad',
+      trainingFinished: '¡Entrenamiento Finalizado!',
+      getReady: 'PREPARÁNDOSE...',
+      paused: 'PAUSADO',
+      goal: 'META:',
+      maximum: 'MÁXIMO',
+      next: 'SIGUIENTE:',
+      editable: 'EDITABLE',
+      currentBpm: 'BPM ACTUAL',
+      countInPhase: 'Fase de Conteo',
+      measureProgress: 'Compás {{current}} de {{total}}',
+      timeProgress: 'Progreso de Tiempo',
+      abort: 'Abortar Entrenamiento',
+      playPause: 'Espacio para Play/Pausa',
+      trainingBpm: 'BPM DE ENTRENAMIENTO',
+      durationMinutes: 'DURACIÓN (MINUTOS)',
+      startTimeTraining: 'Iniciar Entrenamiento',
+      startBpm: 'BPM INICIAL',
+      targetBpm: 'BPM OBJETIVO',
+      incrementBpm: 'INCREMENTO (BPM)',
+      everyBars: 'CADA (COMPASES)',
+      startTraining: 'Iniciar Entrenamiento',
+      trainingInProgress: 'Entrenamiento en Curso...',
+      settingsTitle: 'Configuración',
+      generalVolume: 'Volumen General',
+      metronomeSound: 'Sonido del Metrónomo',
+      soundWav: 'Muestras WAV (Alta Calidad)',
+      soundDigital: 'Digital',
+      soundMechanical: 'Mecánico (Madera)',
+      soundBeep: 'Beep Digital',
+      countInMeasure: 'Compás Inicial (Conteo)',
+      enableCountIn: 'Habilitar Compás de Conteo',
+      countInDescription: 'Toca 1 compás de preparación antes de iniciar el entrenamiento.',
+      development: 'Desarrollado por:',
+      version: 'Versión:'
+    }
+  }
+}
+
+i18n.use(initReactI18next).init({
+  resources,
+  lng: savedLanguage,
+  fallbackLng: 'en',
+  interpolation: {
+    escapeValue: false
+  }
+})
+
+export default i18n

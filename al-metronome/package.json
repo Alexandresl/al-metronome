@@ -1,7 +1,7 @@
 {
   "name": "al-metronome",
   "productName": "AL Metronome",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "description": "Metrônomo de precisão para músicos",
   "main": "./out/main/index.js",
   "author": "Alexandre Lima",
@@ -26,14 +26,35 @@
     "appId": "com.alexandre.almetronome",
     "productName": "AL Metronome",
     "win": {
-      "target": "nsis",
-      "icon": "resources/icon.ico"
-    }
+      "target": [
+        "appx"
+      ],
+      "forceCodeSigning": false
+    },
+    "appx": {
+      "identityName": "AlexandreSLima.ALMetronome",
+      "applicationId": "ALMetronome",
+      "publisher": "CN=68742F34-B1B3-4360-84E4-6330F97F7633",
+      "publisherDisplayName": "Alexandre S Lima",
+      "backgroundColor": "#121212"
+    },
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "out/**/*",
+      "out/main/**/*",
+      "out/preload/**/*",
+      "out/renderer/**/*"
+    ]
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "i18next": "^25.8.13",
     "lucide-react": "^0.562.0",
+    "react-i18next": "^16.5.4",
     "tone": "^15.1.22"
   },
   "devDependencies": {

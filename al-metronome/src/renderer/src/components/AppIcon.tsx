@@ -23,7 +23,7 @@ export const AppIcon: React.FC<AppIconProps> = ({
     >
       {/* Fundo circular suave */}
       <circle cx="128" cy="128" r="120" fill={color} fillOpacity="0.1" />
-      /* Borda circular */
+      {/* Borda circular */}
       <circle cx="128" cy="128" r="120" stroke={color} strokeWidth="12" />
       {/* O corpo do metrônomo (estilizado como um 'A' moderno) */}
       <path

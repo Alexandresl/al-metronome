@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import './SettingsModal.css'
 import { SoundType } from '../types/metronome.types'
 
@@ -23,6 +24,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   countInEnabled,
   onCountInChange
 }) => {
+  const { t } = useTranslation()
+
   if (!isOpen) return null
 
   return (
@@ -30,7 +33,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       {/* stopPropagation evita que clicar no modal feche ele */}
       <div className="settings-content" onClick={(e) => e.stopPropagation()}>
         <div className="settings-header">
-          <h3>Configurações</h3>
+          <h3>{t('settingsTitle')}</h3>
           <button className="close-btn" onClick={onClose}>
             &times;
           </button>
@@ -38,7 +41,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Controle de Volume */}
         <div className="control-group">
-          <label>Volume Geral: {volume}%</label>
+          <label>
+            {t('generalVolume')}: {volume}%
+          </label>
           <input
             type="range"
             min="0"
@@ -50,15 +55,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Seletor de Som */}
         <div className="control-group">
-          <label>Timbre do Metrônomo</label>
+          <label>{t('metronomeSound')}</label>
           <select value={soundType} onChange={(e) => onSoundChange(e.target.value as SoundType)}>
-            <option value="DIGITAL">Digital (Padrão)</option>
-            <option value="MECHANICAL">Mecânico (Woodblock)</option>
-            <option value="BEEP">Beep Digital</option>
+            <option value="WAV">{t('soundWav')}</option>
+            <option value="DIGITAL">{t('soundDigital')}</option>
+            <option value="MECHANICAL">{t('soundMechanical')}</option>
+            <option value="BEEP">{t('soundBeep')}</option>
           </select>
         </div>
 
-        {/* NOVO: Configuração do Compasso Inicial */}
+        {/* Configuração do Compasso Inicial */}
         <div
           className="control-group"
           style={{
@@ -67,9 +73,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             borderTop: '1px solid var(--border-color)'
           }}
         >
-          <label style={{ marginBottom: '10px', display: 'block' }}>
-            Compasso Inicial (Contagem)
-          </label>
+          <label style={{ marginBottom: '10px', display: 'block' }}>{t('countInMeasure')}</label>
 
           <div style={{ display: 'flex', gap: '20px' }}>
             <label
@@ -87,7 +91,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 onChange={(e) => onCountInChange(e.target.checked)}
                 style={{ width: '18px', height: '18px', accentColor: 'var(--accent-color)' }}
               />
-              Ativar Compasso de Contagem
+              {t('enableCountIn')}
             </label>
           </div>
           <small
@@ -98,21 +102,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               display: 'block'
             }}
           >
-            Toca 1 compasso de preparação antes de iniciar o treino.
+            {t('countInDescription')}
           </small>
         </div>
 
-        {/* Desenvolvido */}
+        {/* Desenvolvido por */}
         <div className="control-group" style={{ borderTop: '1px solid var(--border-color)' }}>
           <label
             style={{
               marginTop: '10px'
             }}
           >
-            Desenvolvimento:
+            {t('development')}
           </label>
           <a href="mailto:contato@alexandrelima.dev">Alexandre Silva Lima</a>
-          <label>Versão:</label>
+          <label>{t('version')}</label>
           <p>v{__APP_VERSION__}</p>
         </div>
       </div>

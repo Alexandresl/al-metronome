@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import './assets/main.css'
 import { BeatDisplay } from './components/beatDisplay'
 import { SpeedTrainerForm } from './components/SpeedTrainerForm'
@@ -10,7 +11,8 @@ import {
   BeatType,
   SpeedTrainerConfig,
   SoundType,
-  TimeTrainerConfig
+  TimeTrainerConfig,
+  TimeSignature
 } from './types/metronome.types'
 import { MetronomeEngine } from './engine/MetronomeEngine'
 import {
@@ -27,12 +29,56 @@ import {
   Clock,
   Plus,
   Minus,
-  XCircle
+  XCircle,
+  Globe // <-- Adicionado ícone de globo para o idioma
 } from 'lucide-react'
 
 type AppMode = 'FREE' | 'SPEED_TRAINER' | 'TIME_TRAINER'
 
-function App() {
+const TabButton = ({
+  active,
+  onClick,
+  icon: Icon,
+  label
+}: {
+  active: boolean
+  onClick: () => void
+  icon: React.ElementType
+  label: string
+}): React.JSX.Element => (
+  <button
+    onClick={onClick}
+    style={{
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      borderBottom: active ? '3px solid var(--accent-color)' : '3px solid transparent',
+      padding: '8px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+      fontWeight: active ? 'bold' : 'normal',
+      transition: 'all 0.2s'
+    }}
+  >
+    <Icon size={18} /> {label}
+  </button>
+)
+
+function App(): React.JSX.Element {
+  // --- INTERNACIONALIZAÇÃO ---
+  const { t, i18n } = useTranslation()
+
+  const toggleLanguage = (): void => {
+    const langs = ['pt', 'en', 'es']
+    const currentIdx = langs.indexOf(i18n.language)
+    const nextIdx = currentIdx === -1 ? 0 : (currentIdx + 1) % langs.length
+    const nextLang = langs[nextIdx]
+    i18n.changeLanguage(nextLang)
+    localStorage.setItem('app_language', nextLang)
+  }
+
   // --- PERSISTÊNCIA ---
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('app_theme') === 'dark')
   const [countInEnabled, setCountInEnabled] = useState(() => {
@@ -46,6 +92,19 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [bpm, setBpm] = useState(120)
   const [currentBeat, setCurrentBeat] = useState<number>(-1)
+
+  // Estado do Compasso na raiz do componente
+  const [timeSignature, setTimeSignature] = useState<TimeSignature>(() => {
+    const saved = localStorage.getItem('app_timeSignature')
+    if (saved) {
+      try {
+        return JSON.parse(saved) // Deserializa o JSON guardado
+      } catch (e) {
+        console.error('Falha ao recuperar o compasso do cache, retornando fallback.', e)
+      }
+    }
+    return { numerator: 4, denominator: 4 } // Fallback corporativo seguro
+  })
 
   // --- ESTADOS DOS TREINOS ---
   const [elapsedTime, setElapsedTime] = useState(0)
@@ -65,9 +124,18 @@ function App() {
   })
 
   const [soundType, setSoundType] = useState<SoundType>(() => {
+    // Força a seleção do WAV para que todos os usuários (mesmo os antigos)
+    // conheçam o novo timbre padrão após a atualização:
+    if (!localStorage.getItem('app_wav_migrated')) {
+      localStorage.setItem('app_wav_migrated', 'true')
+      return 'WAV'
+    }
+
     const saved = localStorage.getItem('app_soundType')
-    // Validação simples para garantir que é um tipo válido
-    return saved === 'MECHANICAL' || saved === 'BEEP' ? saved : 'DIGITAL'
+    if (saved && ['DIGITAL', 'MECHANICAL', 'BEEP', 'WAV'].includes(saved)) {
+      return saved as SoundType
+    }
+    return 'WAV'
   })
   const engineRef = useRef<MetronomeEngine | null>(null)
 
@@ -79,13 +147,16 @@ function App() {
   ])
 
   // --- FUNÇÕES AUXILIARES ---
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60)
     const secs = Math.floor(seconds % 60)
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-  const calculateSpeedTrainerDuration = (config: SpeedTrainerConfig, stepsCount: number) => {
+  const calculateSpeedTrainerDuration = (
+    config: SpeedTrainerConfig,
+    stepsCount: number
+  ): number => {
     let totalSeconds = 0
     let currentB = config.startBpm
     if (countInEnabled) totalSeconds += (60 / currentB) * stepsCount
@@ -103,8 +174,6 @@ function App() {
   }
 
   // --- EFEITOS DE SISTEMA ---
-
-  // Tema
   useEffect(() => {
     if (isDarkMode) {
       document.body.classList.add('dark-theme')
@@ -115,6 +184,11 @@ function App() {
     }
   }, [isDarkMode])
 
+  // Efeito para persistir a fórmula de compasso sempre que for alterada
+  useEffect(() => {
+    localStorage.setItem('app_timeSignature', JSON.stringify(timeSignature))
+  }, [timeSignature])
+
   useEffect(() => {
     localStorage.setItem('app_volume', String(volume))
     localStorage.setItem('app_soundType', soundType)
@@ -122,67 +196,69 @@ function App() {
 
   useEffect(() => localStorage.setItem('app_countIn', String(countInEnabled)), [countInEnabled])
 
-  // Inicialização Engine
   useEffect(() => {
     engineRef.current = new MetronomeEngine((beatIndex) => setCurrentBeat(beatIndex))
     engineRef.current.setVolume(volume)
     return () => {
       engineRef.current?.stop()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Sync Áudio
   useEffect(() => {
     if (engineRef.current) {
       engineRef.current.setVolume(volume)
       engineRef.current.setSoundType(soundType)
       engineRef.current.setSteps(steps)
       engineRef.current.setBpm(bpm)
+      engineRef.current.setBpm(bpm)
+      engineRef.current.setTimeSignature(timeSignature)
     }
-  }, [volume, soundType, steps, bpm])
+  }, [volume, soundType, steps, bpm, timeSignature])
+
+  useEffect(() => {
+    setSteps((prevSteps) => {
+      return Array.from({ length: timeSignature.numerator }).map((_, i) => {
+        // Preserva o tipo (ACCENT/NORMAL/MUTE) se a caixa já existia,
+        // senão cria com o padrão corporativo: tempo 1 é Acento, resto é Normal
+        const existingStep = prevSteps.find((s) => s.index === i)
+        if (existingStep) return existingStep
+
+        return { index: i, type: i === 0 ? 'ACCENT' : ('NORMAL' as BeatType) }
+      })
+    })
+
+    // Zera o contador visual para evitar crash se o compasso diminuir (ex: de 4/4 para 3/4)
+    setCurrentBeat(-1)
+  }, [timeSignature.numerator])
 
   // --- HANDLERS PRINCIPAIS ---
-
-  // 1. Pause Audio (Não reseta nada)
   const pauseAudio = useCallback(() => {
     engineRef.current?.stop()
     setIsPlaying(false)
     setCurrentBeat(-1)
-    // Nota: Não resetamos elapsedTime nem isCountInPhase aqui
   }, [])
 
-  // 2. Stop Total (Reseta tudo - Botão "Abortar")
   const fullStop = useCallback(() => {
     pauseAudio()
     setElapsedTime(0)
     setIsCountInPhase(false)
     barsCountedRef.current = 0
     setBarsDisplay(0)
-    // Se quiser que ao parar ele saia do modo "Visualização" para o "Formulário",
-    // precisamos limpar a config ativa. Mas vamos manter visual por enquanto ou limpar:
-    // setTimeConfig(null); setSpeedConfig(null);
-    // Para UX melhor: só reseta os contadores.
   }, [pauseAudio])
 
-  // 3. Toggle Play/Pause (Lógica Inteligente)
-  const togglePlay = useCallback(async () => {
+  const togglePlay = useCallback(async (): Promise<void> => {
     if (!engineRef.current) return
 
     if (isPlaying) {
-      // Se está tocando, PAUSA.
       pauseAudio()
     } else {
-      // Se está parado/pausado, RETOMA ou INICIA.
-
-      // Validação de Configuração
       if (mode === 'SPEED_TRAINER' && !speedConfig) return
       if (mode === 'TIME_TRAINER' && !timeConfig) return
 
       await engineRef.current.start()
       setIsPlaying(true)
 
-      // Se for um inicio "do zero" (elapsedTime == 0), configura estado inicial
-      // Se elapsedTime > 0, assume que é um "Resume" e não reseta nada.
       if (elapsedTime === 0 && mode !== 'FREE') {
         barsCountedRef.current = 0
         setBarsDisplay(0)
@@ -192,8 +268,6 @@ function App() {
   }, [isPlaying, mode, speedConfig, timeConfig, elapsedTime, countInEnabled, pauseAudio])
 
   // --- EFEITOS DE LÓGICA DE TREINO ---
-
-  // Cronômetro Central e Parada Automática
   useEffect(() => {
     let interval: NodeJS.Timeout
     if (isPlaying) {
@@ -201,20 +275,15 @@ function App() {
         setElapsedTime((prev) => {
           const newTime = prev + 1
 
-          // Lógica de Parada para TIME TRAINER
           if (mode === 'TIME_TRAINER' && !isCountInPhase && newTime >= totalDuration) {
-            // 1. Para o motor de áudio imediatamente
             engineRef.current?.stop()
             setIsPlaying(false)
             setCurrentBeat(-1)
 
-            // 2. Exibe alerta e, ao clicar OK, reseta para a tela inicial (Formulário)
             setTimeout(() => {
-              alert('Treino por Tempo Finalizado!')
-
-              // --- A MUDANÇA ESTÁ AQUI ---
-              setTimeConfig(null) // Isso remove a tela de "Execução" e volta para o Form
-              setElapsedTime(0) // Zera o cronômetro
+              alert(t('trainingFinished'))
+              setTimeConfig(null)
+              setElapsedTime(0)
               setIsCountInPhase(false)
             }, 100)
 
@@ -225,9 +294,8 @@ function App() {
       }, 1000)
     }
     return () => clearInterval(interval)
-  }, [isPlaying, mode, totalDuration, isCountInPhase])
+  }, [isPlaying, mode, totalDuration, isCountInPhase, t])
 
-  // Lógica do Speed Trainer e Count-in
   useEffect(() => {
     if (isPlaying && mode === 'SPEED_TRAINER' && speedConfig) {
       if (currentBeat === 0) {
@@ -260,7 +328,6 @@ function App() {
       }
     }
 
-    // Gestão do Count-in no Time Trainer
     if (isPlaying && mode === 'TIME_TRAINER') {
       if (currentBeat === 0 && isCountInPhase) {
         barsCountedRef.current += 1
@@ -271,13 +338,13 @@ function App() {
         }
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentBeat])
 
-  // --- TECLA DE ESPAÇO (HOTKEY) ---
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.code === 'Space') {
-        event.preventDefault() // Evita scroll da página
+        event.preventDefault()
         togglePlay()
       }
     }
@@ -286,27 +353,26 @@ function App() {
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [togglePlay]) // togglePlay é dependencia estável (useCallback)
+  }, [togglePlay])
 
   // --- HELPERS DE INTERFACE ---
-  const handleStartSpeedTrainer = async (config: SpeedTrainerConfig) => {
+  const handleStartSpeedTrainer = async (config: SpeedTrainerConfig): Promise<void> => {
     setSpeedConfig(config)
     setBpm(config.startBpm)
     startTrainerCommon(calculateSpeedTrainerDuration(config, steps.length))
   }
 
-  const handleStartTimeTrainer = async (config: TimeTrainerConfig) => {
+  const handleStartTimeTrainer = async (config: TimeTrainerConfig): Promise<void> => {
     setTimeConfig(config)
     setBpm(config.bpm)
     startTrainerCommon(config.minutes * 60)
   }
 
-  const startTrainerCommon = (duration: number) => {
-    fullStop() // Garante reset
+  const startTrainerCommon = (duration: number): void => {
+    fullStop()
     setIsCountInPhase(countInEnabled)
     setTotalDuration(duration)
 
-    // Pequeno delay para iniciar
     if (engineRef.current) {
       setTimeout(async () => {
         await engineRef.current?.start()
@@ -315,7 +381,7 @@ function App() {
     }
   }
 
-  const handleBeatClick = (index: number) => {
+  const handleBeatClick = (index: number): void => {
     const newSteps = [...steps]
     const currentType = newSteps[index].type
     let nextType: BeatType = 'ACCENT'
@@ -325,7 +391,7 @@ function App() {
     setSteps(newSteps)
   }
 
-  const changeBpmOnPause = (delta: number) => {
+  const changeBpmOnPause = (delta: number): void => {
     setBpm((prev) => {
       const val = prev + delta
       if (val < 20) return 20
@@ -333,27 +399,6 @@ function App() {
       return val
     })
   }
-
-  const TabButton = ({ active, onClick, icon: Icon, label }) => (
-    <button
-      onClick={onClick}
-      style={{
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        borderBottom: active ? '3px solid var(--accent-color)' : '3px solid transparent',
-        padding: '8px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
-        fontWeight: active ? 'bold' : 'normal',
-        transition: 'all 0.2s'
-      }}
-    >
-      <Icon size={18} /> {label}
-    </button>
-  )
 
   return (
     <div className="app-container" style={{ overflowY: 'auto' }}>
@@ -389,13 +434,33 @@ function App() {
           <AppIcon size={28} /> <span>AL Metronome</span>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
-          {/* Botão Dark Mode - Com estilo transparente restaurado */}
+        <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          {/* Botão de Idioma */}
+          <button
+            className="icon-btn"
+            onClick={toggleLanguage}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: 'var(--text-primary)'
+            }}
+            title="Mudar Idioma / Change Language"
+          >
+            <Globe size={22} />
+            <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>
+              {i18n.language.toUpperCase()}
+            </span>
+          </button>
+
           <button
             className="icon-btn"
             onClick={() => setIsDarkMode(!isDarkMode)}
             style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-            title={isDarkMode ? 'Mudar para Claro' : 'Mudar para Escuro'}
+            title={isDarkMode ? t('themeLight') : t('themeDark')}
           >
             {isDarkMode ? (
               <Sun size={24} color="var(--text-primary)" />
@@ -404,12 +469,11 @@ function App() {
             )}
           </button>
 
-          {/* Botão Settings - Com estilo transparente restaurado */}
           <button
             className="icon-btn"
             onClick={() => setSettingsOpen(true)}
             style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-            title="Configurações"
+            title={t('settings')}
           >
             <Settings2 size={24} color="var(--text-primary)" />
           </button>
@@ -432,7 +496,7 @@ function App() {
             fullStop()
           }}
           icon={Music}
-          label="Livre"
+          label={t('freeMode')}
         />
         <TabButton
           active={mode === 'TIME_TRAINER'}
@@ -441,7 +505,7 @@ function App() {
             fullStop()
           }}
           icon={Clock}
-          label="Por Tempo"
+          label={t('timeTrainer')}
         />
         <TabButton
           active={mode === 'SPEED_TRAINER'}
@@ -450,12 +514,11 @@ function App() {
             fullStop()
           }}
           icon={Gauge}
-          label="Speed Trainer"
+          label={t('speedTrainer')}
         />
       </div>
 
       <main className="main-content" style={{ justifyContent: 'flex-start', paddingTop: '5px' }}>
-        {/* === MODO LIVRE === */}
         {mode === 'FREE' && (
           <div style={{ textAlign: 'center', marginBottom: '15px', animation: 'fadeIn 0.3s' }}>
             <h1 style={{ fontSize: '4rem', margin: 0, fontWeight: 700 }}>
@@ -475,7 +538,6 @@ function App() {
           </div>
         )}
 
-        {/* === MODOS DE TREINO === */}
         {mode !== 'FREE' && (
           <div
             style={{
@@ -487,9 +549,6 @@ function App() {
               alignItems: 'center'
             }}
           >
-            {/* Renderiza Forms apenas se NÃO estiver tocando E não tiver uma config ativa (ou seja, está resetado) */}
-            {/* Na lógica de Pause, 'speedConfig' ou 'timeConfig' continuam existindo. 
-                 Portanto, só mostramos o form se configs forem nulas OU se elapsedTime for 0 E não estiver tocando (Resetado) */}
             {(!speedConfig && mode === 'SPEED_TRAINER') ||
             (!timeConfig && mode === 'TIME_TRAINER') ? (
               <>
@@ -504,12 +563,11 @@ function App() {
                 )}
               </>
             ) : (
-              /* DISPLAY DE EXECUÇÃO (PAUSA OU RODANDO) */
               <div
                 style={{
                   textAlign: 'center',
                   background: 'var(--bg-panel)',
-                  padding: '15px',
+                  padding: '10px',
                   borderRadius: '12px',
                   border: '1px solid var(--border-color)',
                   width: '100%',
@@ -538,11 +596,10 @@ function App() {
                       zIndex: 10
                     }}
                   >
-                    <AlertCircle size={14} /> PREPARAR...
+                    <AlertCircle size={14} /> {t('getReady')}
                   </div>
                 )}
 
-                {/* Banner de PAUSA */}
                 {!isPlaying && !isCountInPhase && (
                   <div
                     style={{
@@ -559,7 +616,7 @@ function App() {
                       zIndex: 10
                     }}
                   >
-                    PAUSADO
+                    {t('paused')}
                   </div>
                 )}
 
@@ -575,7 +632,9 @@ function App() {
                 >
                   {mode === 'SPEED_TRAINER' ? (
                     <>
-                      <span>META: {speedConfig?.endBpm} BPM</span>
+                      <span>
+                        {t('goal')} {speedConfig?.endBpm} BPM
+                      </span>
                       <span>
                         {bpm >= (speedConfig?.endBpm || 0) ? (
                           <span
@@ -586,22 +645,23 @@ function App() {
                               alignItems: 'center'
                             }}
                           >
-                            <CheckCircle2 size={14} /> MÁXIMO
+                            <CheckCircle2 size={14} /> {t('maximum')}
                           </span>
                         ) : (
-                          `PRÓXIMO: ${bpm + (speedConfig?.bpmIncrement || 0)}`
+                          `${t('next')} ${bpm + (speedConfig?.bpmIncrement || 0)}`
                         )}
                       </span>
                     </>
                   ) : (
                     <>
-                      <span>META: {timeConfig?.minutes} MIN</span>
-                      <span>EDITÁVEL</span>
+                      <span>
+                        {t('goal')} {timeConfig?.minutes} {t('min')}
+                      </span>
+                      <span>{t('editable')}</span>
                     </>
                   )}
                 </div>
 
-                {/* DISPLAY BPM (COM BOTÕES DE EDIÇÃO NA PAUSA) */}
                 <div
                   style={{
                     display: 'flex',
@@ -610,7 +670,6 @@ function App() {
                     gap: '15px'
                   }}
                 >
-                  {/* Botão Menos (Só aparece no modo Time Trainer quando pausado) */}
                   {!isPlaying && mode === 'TIME_TRAINER' && (
                     <button
                       onClick={() => changeBpmOnPause(-1)}
@@ -633,7 +692,7 @@ function App() {
 
                   <div
                     style={{
-                      fontSize: '4rem',
+                      fontSize: '3.5rem',
                       fontWeight: 'bold',
                       color: isCountInPhase ? 'var(--beat-normal)' : 'var(--accent-color)',
                       lineHeight: 1,
@@ -643,7 +702,6 @@ function App() {
                     {bpm}
                   </div>
 
-                  {/* Botão Mais */}
                   {!isPlaying && mode === 'TIME_TRAINER' && (
                     <button
                       onClick={() => changeBpmOnPause(1)}
@@ -669,10 +727,10 @@ function App() {
                   style={{
                     fontSize: '0.9rem',
                     color: 'var(--text-secondary)',
-                    marginBottom: '15px'
+                    marginBottom: '5px'
                   }}
                 >
-                  BPM ATUAL
+                  {t('currentBpm')}
                 </div>
 
                 <div
@@ -680,7 +738,7 @@ function App() {
                     background: 'var(--bg-primary)',
                     borderRadius: '8px',
                     padding: '8px 12px',
-                    marginBottom: '15px',
+                    marginBottom: '10px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -725,24 +783,64 @@ function App() {
                   style={{ marginTop: '4px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}
                 >
                   {isCountInPhase
-                    ? 'Contagem Inicial'
+                    ? t('countInPhase')
                     : mode === 'SPEED_TRAINER'
-                      ? `Compasso ${barsDisplay} de ${speedConfig?.barsInterval}`
-                      : 'Progresso do Tempo'}
+                      ? t('measureProgress', {
+                          current: barsDisplay,
+                          total: speedConfig?.barsInterval
+                        })
+                      : t('timeProgress')}
                 </div>
               </div>
             )}
           </div>
         )}
 
+        {/* SELETOR DE FÓRMULA DE COMPASSO */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
+          <select
+            value={`${timeSignature.numerator}/${timeSignature.denominator}`}
+            onChange={(e) => {
+              const [num, den] = e.target.value.split('/').map(Number)
+              setTimeSignature({ numerator: num, denominator: den })
+              fullStop() // Pausa o metrônomo preventivamente para evitar dessincronização no motor de áudio
+            }}
+            style={{
+              background: 'var(--bg-panel)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
+          >
+            {/* Grupo 1: Métrica baseada em Semínimas (Denominador 4) */}
+            <option value="2/4">2/4</option>
+            <option value="3/4">3/4</option>
+            <option value="4/4">4/4</option>
+            <option value="5/4">5/4</option>
+            <option value="6/4">6/4</option>
+            <option value="9/4">9/4</option>
+
+            {/* Grupo 2: Métrica baseada em Colcheias (Denominador 8) */}
+            <option value="6/8">6/8</option>
+            <option value="7/8">7/8</option>
+            <option value="9/8">9/8</option>
+            <option value="11/8">11/8</option>
+            <option value="12/8">12/8</option>
+            <option value="15/8">15/8</option>
+          </select>
+        </div>
+
         <BeatDisplay steps={steps} currentStepIndex={currentBeat} onBeatClick={handleBeatClick} />
 
-        {/* --- CONTROLES DE PLAYER (BOTÕES PRINCIPAIS) --- */}
-        {/* Mostra sempre no Free. Nos outros modos, mostra se estiver tocando ou se estiver pausado (config existe) */}
         {(mode === 'FREE' || isPlaying || speedConfig || timeConfig) && (
           <div
             style={{
-              marginTop: '15px',
+              marginTop: '10px',
               paddingBottom: '10px',
               flexShrink: 0,
               display: 'flex',
@@ -750,7 +848,6 @@ function App() {
               gap: '20px'
             }}
           >
-            {/* BOTÃO SECUNDÁRIO: STOP/RESET (Só aparece nos modos de treino quando pausado ou rodando para permitir abortar) */}
             {mode !== 'FREE' && (isPlaying || speedConfig || timeConfig) && (
               <button
                 onClick={() => {
@@ -758,7 +855,7 @@ function App() {
                   setSpeedConfig(null)
                   setTimeConfig(null)
                 }}
-                title="Abortar Treino e Voltar"
+                title={t('abort')}
                 style={{
                   background: 'var(--bg-panel)',
                   border: '1px solid var(--border-color)',
@@ -777,12 +874,11 @@ function App() {
               </button>
             )}
 
-            {/* BOTÃO PRINCIPAL: PLAY/PAUSE */}
             <button
               onClick={togglePlay}
-              title="Espaço para Play/Pause"
+              title={t('playPause')}
               style={{
-                background: isPlaying ? 'var(--bg-panel)' : 'var(--accent-color)', // Inverti visualmente para destacar pause
+                background: isPlaying ? 'var(--bg-panel)' : 'var(--accent-color)',
                 border: isPlaying ? '2px solid var(--accent-color)' : 'none',
                 color: isPlaying ? 'var(--accent-color)' : 'white',
                 borderRadius: '50%',
@@ -803,7 +899,6 @@ function App() {
               )}
             </button>
 
-            {/* Espaçador para centralizar o botão principal se o botão stop existir */}
             {mode !== 'FREE' && <div style={{ width: '50px' }}></div>}
           </div>
         )}

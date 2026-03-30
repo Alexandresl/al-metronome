@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './SpeedTrainerForm.css'
 import { SpeedTrainerConfig } from '../types/metronome.types'
+import { useTranslation } from 'react-i18next'
 
 interface SpeedTrainerFormProps {
   onStartTrainer: (config: SpeedTrainerConfig) => void
@@ -11,9 +12,11 @@ export const SpeedTrainerForm: React.FC<SpeedTrainerFormProps> = ({
   onStartTrainer,
   isRunning
 }) => {
+  const { t } = useTranslation()
+
   // Funções auxiliares para persistência
   // Tenta ler do armazenamento, se não tiver, retorna o valor padrão
-  const getSavedValue = (key: string, defaultValue: number) => {
+  const getSavedValue = (key: string, defaultValue: number): number => {
     const saved = localStorage.getItem(key)
     return saved ? Number(saved) : defaultValue
   }
@@ -35,7 +38,7 @@ export const SpeedTrainerForm: React.FC<SpeedTrainerFormProps> = ({
     localStorage.setItem('trainer_bars', String(bars))
   }, [startBpm, endBpm, increment, bars])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault()
 
     if (startBpm >= endBpm) {
@@ -61,7 +64,7 @@ export const SpeedTrainerForm: React.FC<SpeedTrainerFormProps> = ({
         <div className="trainer-grid">
           {/* BPM Inicial */}
           <div className="input-group">
-            <label>BPM Inicial</label>
+            <label>{t('startBpm')}</label>
             <input
               type="number"
               value={startBpm}
@@ -73,7 +76,7 @@ export const SpeedTrainerForm: React.FC<SpeedTrainerFormProps> = ({
 
           {/* BPM Final */}
           <div className="input-group">
-            <label>BPM Alvo</label>
+            <label>{t('targetBpm')}</label>
             <input
               type="number"
               value={endBpm}
@@ -85,7 +88,7 @@ export const SpeedTrainerForm: React.FC<SpeedTrainerFormProps> = ({
 
           {/* Incremento */}
           <div className="input-group">
-            <label>Incremento (BPM)</label>
+            <label>{t('incrementBpm')}</label>
             <input
               type="number"
               value={increment}
@@ -97,7 +100,7 @@ export const SpeedTrainerForm: React.FC<SpeedTrainerFormProps> = ({
 
           {/* Intervalo de Compassos */}
           <div className="input-group">
-            <label>A cada (Compassos)</label>
+            <label>{t('everyBars')}</label>
             <input
               type="number"
               value={bars}
@@ -109,7 +112,7 @@ export const SpeedTrainerForm: React.FC<SpeedTrainerFormProps> = ({
         </div>
 
         <button type="submit" className="action-btn" disabled={isRunning}>
-          {isRunning ? 'Treino em Andamento...' : 'Iniciar Treino'}
+          {isRunning ? t('trainingInProgress') : t('startTraining')}
         </button>
       </form>
     </div>

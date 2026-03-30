@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './SpeedTrainerForm.css' // Podemos reutilizar o CSS do outro form
 import { TimeTrainerConfig } from '../types/metronome.types'
+import { useTranslation } from 'react-i18next'
 
 interface TimeTrainerFormProps {
   onStart: (config: TimeTrainerConfig) => void
@@ -8,8 +9,10 @@ interface TimeTrainerFormProps {
 }
 
 export const TimeTrainerForm: React.FC<TimeTrainerFormProps> = ({ onStart, isRunning }) => {
+  const { t } = useTranslation()
+
   // Persistência
-  const getSavedValue = (key: string, defaultValue: number) => {
+  const getSavedValue = (key: string, defaultValue: number): number => {
     const saved = localStorage.getItem(key)
     return saved ? Number(saved) : defaultValue
   }
@@ -22,7 +25,7 @@ export const TimeTrainerForm: React.FC<TimeTrainerFormProps> = ({ onStart, isRun
     localStorage.setItem('time_minutes', String(minutes))
   }, [bpm, minutes])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault()
     onStart({ bpm, minutes })
   }
@@ -33,7 +36,7 @@ export const TimeTrainerForm: React.FC<TimeTrainerFormProps> = ({ onStart, isRun
         <div className="trainer-grid">
           {/* BPM ÚNICO */}
           <div className="input-group">
-            <label>BPM do Treino</label>
+            <label>{t('trainingBpm')}</label>
             <input
               type="number"
               min="20"
@@ -45,7 +48,7 @@ export const TimeTrainerForm: React.FC<TimeTrainerFormProps> = ({ onStart, isRun
 
           {/* DURAÇÃO */}
           <div className="input-group">
-            <label>Duração (Minutos)</label>
+            <label>{t('durationMinutes')}</label>
             <input
               type="number"
               min="1"
@@ -57,7 +60,7 @@ export const TimeTrainerForm: React.FC<TimeTrainerFormProps> = ({ onStart, isRun
         </div>
 
         <button type="submit" className="action-btn" disabled={isRunning}>
-          {isRunning ? 'Treino em Andamento...' : 'Iniciar Treino por Tempo'}
+          {isRunning ? t('trainingInProgress') : t('startTimeTraining')}
         </button>
       </form>
     </div>

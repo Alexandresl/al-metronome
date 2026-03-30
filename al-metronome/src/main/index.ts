@@ -6,7 +6,7 @@ function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
-    height: 670,
+    height: 760,
     show: false,
     autoHideMenuBar: true,
     icon: join(__dirname, `../../resources/icon.${process.platform === 'win32' ? 'ico' : 'png'}`),
